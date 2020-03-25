@@ -13,7 +13,13 @@ jobs:
           root: my_workspace
           # Must be relative path from root
           paths:
-            - echo-output      
+            - echo-output
+      - deploy:
+          name: Build and push Docker image
+          command: |
+            docker build -t circleci/cci-demo-docker:$TAG .
+            docker login -u simbioseuser -p ${DOCKER_HUB_PASS}
+            docker pull simbioseventures/zookeeper:infra
   two:
     docker:
       - image: simbioseventures/zookeeper:infra
