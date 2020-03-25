@@ -21,10 +21,12 @@ jobs:
 
 workflows:
   version: 2.1
-  circle-test:
+  DOCKER:
     jobs:
       - zookeeper
-      - kafka
+      - kafka:
+          requires:
+            - zookeeper
 
 
 #working 1 machine
