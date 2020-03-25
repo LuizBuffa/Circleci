@@ -2,7 +2,10 @@ version: 2
 jobs:
   one:
     docker:
-      - image: circleci/ruby:2.4.1
+      command: |
+            docker login -u simbioseuser -p $DOCKER_HUB_PASS
+            docker pull simbioseventures/zookeeper:infra
+      - image: simbioseventures/zookeeper:infra
     steps:
       - checkout
       - run: echo "A first hello"
@@ -14,11 +17,7 @@ jobs:
           # Must be relative path from root
           paths:
             - echo-output
-      - run:
-          name: Build and push Docker image
-          command: |
-            docker login -u simbioseuser -p $DOCKER_HUB_PASS
-            docker pull simbioseventures/zookeeper:infra
+  
   two:
     docker:
       - image: simbioseventures/zookeeper:infra
