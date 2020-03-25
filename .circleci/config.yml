@@ -27,6 +27,15 @@ jobs:
     steps:
       - run: echo ok
 
+  api:
+    docker:
+      - image: simbioseventures/api-airflow-kong:infra-dc1
+        auth:
+          username: simbioseuser  # can specify string literal values
+          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
+    steps:
+      - run: echo ok
+
   mysql:
     docker:
       - image: mysql:8.0.17
@@ -44,16 +53,6 @@ jobs:
       - image: aerospike/aerospike-server
     steps:
       - run: echo ok
-
-  api:
-    docker:
-      - image: simbioseventures/api-airflow-kong:infra-dc1
-        auth:
-          username: simbioseuser  # can specify string literal values
-          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
-    steps:
-      - run: echo ok
-
 
 
 workflows:
@@ -73,5 +72,5 @@ workflows:
           requires:
             - kafka
       - api:
-        requires:
-          - shannondb-presto
+          requires:
+            - shannondb-presto
