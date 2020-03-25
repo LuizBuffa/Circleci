@@ -1,16 +1,30 @@
 version: 2.1
 jobs:
-  build:
+  zookeeper:
     docker:
       - image: simbioseventures/zookeeper:infra
         auth:
           username: simbioseuser  # can specify string literal values
-          password: s1mbi0seg1ts3gur@nç@  # or project environment variable reference
+          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
+    steps:
+      - run: echo ok
+      
+  kafka:
+    docker:
+      - image: simbioseventures/kafka:infra
+        auth:
+          username: simbioseuser  # can specify string literal values
+          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
     steps:
       - run: echo ok
 
 
-
+workflows:
+  version: 2.1
+  circle-test:
+    jobs:
+      - zookeeper
+      - kafka
 
 
 #working 1 machine
