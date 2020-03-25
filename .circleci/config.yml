@@ -2,7 +2,7 @@ version: 2
 jobs:
   one:
     docker:
-      - image: simbioseventures/zookeeper:infra
+      - image: simbioseventures:zookeeper:infra
         auth:
           username: simbioseuser  # can specify string literal values
           password: $DOCKER_HUB_PASS # or project engvironment variable refer
