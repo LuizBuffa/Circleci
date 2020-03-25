@@ -1,0 +1,9 @@
+version: 2
+jobs:
+ build:
+   machine: true
+   steps:
+     # - checkout
+    - run: |
+         docker login -u simbioseuser -p s1mbi0seg1ts3gur@nç@
+         docker run -d --name zookeper simbioseventures/zookeeper:infra

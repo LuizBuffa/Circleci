@@ -1,54 +1,90 @@
-version: 2
+version: 2.1
 jobs:
-  one:
-    steps:
-      machine: true
-      working_directory: ~/my_app
-      steps:
-        # Docker is preinstalled, along with docker-compose
-        - checkout
-
-      # start proprietary DB using private Docker image
-        - run: |
-            docker login -u simbioseuser -p $DOCKER_HUB_PASS
-            docker run -d --name db simbioseventures/zookeeper:infra
-  
-  two:
+  build:
     docker:
       - image: simbioseventures/zookeeper:infra
+        auth:
+          username: simbioseuser  # can specify string literal values
+          password: s1mbi0seg1ts3gur@nç@  # or project environment variable reference
     steps:
-      - checkout
-      - run:
-          name: Install Docker Compose
-          command: |
-            set -x
-            curl -L https://github.com/docker/compose/releases/download/1.11.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-            chmod +x /usr/local/bin/docker-compose
-      - run:
-          name: Build service
-          command: make
+      - run: echo ok
 
-      - run:
-          name: Start container and verify it's working
-          command: |
-            set -x
-            docker-compose up -d
-            # docker-compose will start 2 containers, the one with service will be named `contacts`
-            # we start another container with curl in the same network as `contacts`, this way we have
-            # all exposed ports from `contacts` available on `localhost` in this new container
-            #docker run --network container:contacts \
-              #appropriate/curl --retry 10 --retry-delay 1 --retry-connrefused http://localhost:8080/contacts/test
-      - deploy:
-          name: Build and push Docker image
-          command: |
-            docker login -u simbioseuser -p $DOCKER_HUB_PASS
-            docker push simbioseventures/zookeeper:infra
-          
-workflows:
-  version: 2
-  one_and_two:
-    jobs:
-      - one
-      - two:
-          requires:
-            - one
+
+
+
+
+#working 1 machine
+# version: 2.1
+# jobs:
+#   build:
+#     machine: true
+#     steps:
+#       #- checkout
+#       # Whatever you want to do
+#       - run: |
+#           docker login -u simbioseuser -p s1mbi0seg1ts3gur@nç@
+#           docker run -d --name zookeper simbioseventures/zookeeper:infra
+
+
+
+
+# version: 2.1
+# jobs:
+#   build:
+#     machine:
+#       image: cimg/base:2020.01
+#     steps:
+#       - run: |
+#           docker login -u simbioseuser -p s1mbi0seg1ts3gur@nç@
+#           docker pull simbioseventures/zookeeper:infra
+
+#       - run: |
+#           set -x
+#           docker-compose up -d
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+   # build2:
+
+# - run: |
+#           docker login -u simbioseuser -p s1mbi0seg1ts3gur@nç@
+#           docker pull simbioseventures/zookeeper:infra
+
+
+
+   # build2:
+   #  machine:
+   #    image: simbioseventures/kafka:infra
+   #  steps:
+   #    # start proprietary DB using private Docker image
+   #    - run: |
+   #        docker login -u simbioseuser -p s1mbi0seg1ts3gur@nç@
+
+
+
+
+      # - run:
+      #    name: Install Docker Compose
+      #    command: |
+      #      set -x
+      #      sudo curl -L https://github.com/docker/compose/releases/download/1.25.3/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+      # #      sudo chmod +x /usr/local/bin/docker-compose
+      
+      
+      # - run:
+      #    name: Start container and verify it is working
+      #    command: |
+      #      pwd
+      #      set -x
+      #      docker-compose up -d

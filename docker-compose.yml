@@ -1,0 +1,272 @@
+version: '2.4'
+services:
+
+  zookeeper:
+    image: "simbioseventures/zookeeper:infra"
+    hostname: "zookeeper"
+    container_name: "zookeeper"
+    restart: always
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"
+    networks:
+      dockernet:
+        ipv4_address: 172.16.240.2
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc -w 2 zookeeper 2181"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ~/simbiose/logs/zookeeper:/var/log/zookeeper
+      - ~/simbiose/services-data/zookeeper:/home/zookeeper/version-2
+    # mem_limit: 256m
+    # cpus: '2.0'
+    
+  kafka-dc1:
+    image: "simbioseventures/kafka:infra"
+    hostname: "kafka-dc1"
+    container_name: "kafka-dc1"
+    restart: always
+    ports:
+      - "9092:9092"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    networks:
+      dockernet:
+        ipv4_address: 172.16.240.3
+    expose:
+      - "9092"
+    healthcheck:
+      test: ["CMD-SHELL", "ps -ef | grep -v grep | grep Xmx"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ~/simbiose/logs/kafka-dc1:/var/log/kafka
+    # mem_limit: 256m
+    # cpus: '2.0'
+
+  shannondb-presto:
+    image: "simbioseventures/shannondb-presto:infra-dc1"
+    hostname: "shannondb-presto"
+    container_name: "shannondb-presto"
+    restart: always
+    ports:
+      - "1234:1234"
+      - "1235:1235"
+      - "8081:8081"
+    expose:
+      - "1234"
+      - "1235"
+      - "8081"
+    networks:
+      dockernet:
+        ipv4_address: 172.16.240.4
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+      kafka-dc1:
+        condition: service_healthy
+    healthcheck:
+        test: ["CMD-SHELL", "ps aux | grep shannondb | grep -v grep | grep shannondb"]
+        interval: 5s
+        timeout: 10s
+        retries: 3
+    privileged: True
+    volumes:
+      - ~/simbiose/logs/shannondb:/opt/shannondb/s1data/log/
+      - ~/simbiose/services-data/shannondb:/opt/shannondb/s1data
+      - ~/simbiose/code/shannondb:/opt/shannondb
+      - ~/simbiose/services-data/shannondb/.m2:/root/.m2
+      - ~/simbiose/logs/presto:/var/presto/data/var/log
+    # mem_limit: 1536m
+    # cpus: '2.0'
+
+  mysql:
+    image: "mysql:8.0.17"
+    hostname: "mysql"
+    container_name: "mysql"
+    restart: always 
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    healthcheck:
+        test: "/usr/bin/mysql --user=root --password=root --execute \"SHOW DATABASES;\""
+        interval: 10s
+        timeout: 10s
+        retries: 10
+    networks:
+      dockernet:
+        ipv4_address: 172.16.240.5
+    expose:
+      - "3306"
+    volumes:
+      - ~/simbiose/services-data/mysql:/var/lib/mysql:rw
+    # mem_limit: 256m
+
+  postgres:
+    image: "postgres:12"
+    hostname: "postgres"
+    container_name: "postgres"
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      dockernet:
+        ipv4_address: 172.16.240.6
+    expose:
+      - "5432"
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 5s
+        timeout: 10s
+        retries: 10
+    volumes:
+      - ~/simbiose/services-data/postgres/:/var/lib/postgresql/data
+
+  aerospike:
+    image: "aerospike/aerospike-server"
+    hostname: "aerospike"
+    container_name: "aerospike"
+    restart: always
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "3002:3002"
+      - "3003:3003"
+    networks:
+      dockernet:
+        ipv4_address: 172.16.240.7
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/aerospike/bin/asinfo -h localhost -p 3000 -v status"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    environment:
+      NAMESPACE: test
+    volumes:
+      - ~/simbiose/services-data/aerospike/data:/opt/aerospike/data
+      - ~/simbiose/logs/aerospike:/var/logs/aerospike
+    # mem_limit: 256m
+    # cpus: '1.0'
+
+  api:
+    image: "simbioseventures/api-airflow-kong:infra-dc1"
+    hostname: "api"
+    container_name: "api"
+    restart: always
+    ports:
+      #API ports
+      - "8080:8080"
+      #Airflow ports
+      - "8181:8181"
+      #Kong ports
+      - "8444:8444"
+      - "8443:8443"
+      - "8001:8001"
+      - "8000:8000"
+    expose:
+      - "22"
+    depends_on:
+      shannondb-presto:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      aerospike:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl localhost:8080"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    environment:
+      - LOAD_EX=n
+      - EXECUTOR=Local
+    networks:
+      dockernet:
+        ipv4_address: 172.16.240.8
+    volumes:
+      - ~/simbiose/code/api:/simbiose/codebase
+      - ~/simbiose/logs/api:/simbiose/codebase/logs
+      - ~/simbiose/configs/api:/simbiose/configs
+      - ~/simbiose/code/sql-migrations:/simbiose/sql-migrations
+      - ~/simbiose/logs/kong:/usr/local/kong/logs
+      - ~/simbiose/logs/airflow:/var/log/airflow
+      - ~/simbiose/services-data/airflow/dags:/root/airflow/dags_repo   
+    # mem_limit: 1024m
+    # cpus: '2.0'
+    
+  # test-environment:
+  #   image: "simbioseventures/test-environment:infra"
+  #   hostname: "test-environment"
+  #   container_name: "test-environment"
+  #   networks:
+  #     - dc1
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "echo ok"]
+  #     interval: 10s
+  #     timeout: 10s
+  #     retries: 3
+  #   volumes:
+  #     - ~/simbiose/code/test-environment:/simbiose/codebase
+  #     - ~/simbiose/logs/test-environment:/simbiose/codebase/logs
+  #     - ~/simbiose/configs/test-environment:/simbiose/configs
+  #   # mem_limit: 1024m
+  #   # cpus: '0.5'
+
+  data-job-service:
+    image: "simbioseventures/data-job-service:infra"
+    hostname: "data-job-service"
+    container_name: "data-job-service"
+    restart: always
+    ports:
+      - "5050:5050"
+      - "5101:5101"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep data_job_service | grep -v grep | grep data_job_service"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+    networks:
+      dockernet:
+        ipv4_address: 172.16.240.9
+    volumes:
+      - ~/simbiose/code/data_job_service:/simbiose/codebase
+      - ~/simbiose/logs/data-job-service:/var/log/data-job-service
+      - ~/simbiose/services-data/data-job-service/.m2:/root/.m2
+
+  workers:
+    image: "simbioseventures/workers:infra"
+    hostname: "workers"
+    container_name: "workers"
+    restart: always
+    networks:
+      dockernet:
+        ipv4_address: 172.16.240.10
+    volumes:
+      - ~/simbiose/logs/data-parity-worker:/opt/workers/data-parity-worker/logs
+      - ~/simbiose/logs/connection-checker-worker:/opt/workers/connection-checker-worker/logs
+      - ~/simbiose/logs/data-cache-worker:/opt/workers/data-cache-worker/logs
+      - ~/simbiose/logs/notification-worker:/opt/workers/notification-worker/logs
+      - ~/simbiose/logs/datacenter-replication-worker:/opt/workers/datacenter-replication-worker/logs
+    # mem_limit: 256m
+    # cpus: '0.50'
+  
+networks:
+  #dc1:
+  dockernet:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.240.0/24
