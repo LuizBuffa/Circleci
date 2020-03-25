@@ -5,10 +5,10 @@ jobs:
       - image: simbioseventures/zookeeper:infra
         auth:
           username: simbioseuser  # can specify string literal values
-          password: $DOCKERHUB_PASSWORD  # or projecfdft environment variable reference
+          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
     steps:
       - run: echo ok
-      
+
   kafka:
     docker:
       - image: simbioseventures/kafka:infra
@@ -17,6 +17,52 @@ jobs:
           password: $DOCKERHUB_PASSWORD  # or project environment variable reference
     steps:
       - run: echo ok
+  
+  shannondb-presto:
+    docker:
+      - image: simbioseventures/shannondb-presto:infra-dc1
+        auth:
+          username: simbioseuser  # can specify string literal values
+          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
+    steps:
+      - run: echo ok
+
+  mysql:
+    docker:
+      - image: mysql:8.0.17
+        auth:
+          username: simbioseuser  # can specify string literal values
+          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
+    steps:
+      - run: echo ok
+
+    postgres:
+    docker:
+      - image: postgres:12
+        auth:
+          username: simbioseuser  # can specify string literal values
+          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
+    steps:
+      - run: echo ok
+
+   aerospike:
+    docker:
+      - image: aerospike/aerospike-server
+        auth:
+          username: simbioseuser  # can specify string literal values
+          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
+    steps:
+      - run: echo ok
+
+    api:
+    docker:
+      - image: simbioseventures/api-airflow-kong:infra-dc1
+        auth:
+          username: simbioseuser  # can specify string literal values
+          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
+    steps:
+      - run: echo ok
+
 
 
 workflows:
@@ -24,9 +70,21 @@ workflows:
   DOCKER:
     jobs:
       - zookeeper
+      - mysql
+      - postgres
+      - aerospike
       - kafka:
           requires:
             - zookeeper
+      - shannondb-presto:
+          requires:
+            - kafka
+            - zookeeper
+      - api:
+        requires:
+          - shannondb-presto
+
+
 
 
 #working 1 machine
