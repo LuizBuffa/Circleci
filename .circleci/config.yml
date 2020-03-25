@@ -1,7 +1,7 @@
 version: 2
 jobs:
   one:
-    build:
+    steps:
       machine: true
       working_directory: ~/my_app
       steps:
