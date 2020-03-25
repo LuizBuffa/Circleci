@@ -30,31 +30,22 @@ jobs:
   mysql:
     docker:
       - image: mysql:8.0.17
-        auth:
-          username: simbioseuser  # can specify string literal values
-          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
-    steps:
+      steps:
       - run: echo ok
 
-    postgres:
+  postgres:
     docker:
       - image: postgres:12
-        auth:
-          username: simbioseuser  # can specify string literal values
-          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
     steps:
       - run: echo ok
 
-   aerospike:
+  aerospike:
     docker:
       - image: aerospike/aerospike-server
-        auth:
-          username: simbioseuser  # can specify string literal values
-          password: $DOCKERHUB_PASSWORD  # or project environment variable reference
     steps:
       - run: echo ok
 
-    api:
+  api:
     docker:
       - image: simbioseventures/api-airflow-kong:infra-dc1
         auth:
@@ -73,6 +64,7 @@ workflows:
       - mysql
       - postgres
       - aerospike
+
       - kafka:
           requires:
             - zookeeper
@@ -83,82 +75,3 @@ workflows:
       - api:
         requires:
           - shannondb-presto
-
-
-
-
-#working 1 machine
-# version: 2.1
-# jobs:
-#   build:
-#     machine: true
-#     steps:
-#       #- checkout
-#       # Whatever you want to do
-#       - run: |
-#           docker login -u simbioseuser -p s1mbi0seg1ts3gur@nç@
-#           docker run -d --name zookeper simbioseventures/zookeeper:infra
-
-
-
-
-# version: 2.1
-# jobs:
-#   build:
-#     machine:
-#       image: cimg/base:2020.01
-#     steps:
-#       - run: |
-#           docker login -u simbioseuser -p s1mbi0seg1ts3gur@nç@
-#           docker pull simbioseventures/zookeeper:infra
-
-#       - run: |
-#           set -x
-#           docker-compose up -d
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-   # build2:
-
-# - run: |
-#           docker login -u simbioseuser -p s1mbi0seg1ts3gur@nç@
-#           docker pull simbioseventures/zookeeper:infra
-
-
-
-   # build2:
-   #  machine:
-   #    image: simbioseventures/kafka:infra
-   #  steps:
-   #    # start proprietary DB using private Docker image
-   #    - run: |
-   #        docker login -u simbioseuser -p s1mbi0seg1ts3gur@nç@
-
-
-
-
-      # - run:
-      #    name: Install Docker Compose
-      #    command: |
-      #      set -x
-      #      sudo curl -L https://github.com/docker/compose/releases/download/1.25.3/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-      # #      sudo chmod +x /usr/local/bin/docker-compose
-      
-      
-      # - run:
-      #    name: Start container and verify it is working
-      #    command: |
-      #      pwd
-      #      set -x
-      #      docker-compose up -d
