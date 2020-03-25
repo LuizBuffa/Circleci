@@ -3,9 +3,9 @@ jobs:
   one:
     docker:
       - image: simbioseventures/zookeeper:infra
-        command: |
-            docker login -u simbioseuser -p $DOCKER_HUB_PASS
-            docker pull simbioseventures/zookeeper:infra
+        auth:
+          username: simbioseuser  # can specify string literal values
+          password: $DOCKER_HUB_PASS # or project environment variable refer
     steps:
       - checkout
       - run: echo "A first hello"
