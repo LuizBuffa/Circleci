@@ -1,16 +1,17 @@
 version: 2
 jobs:
-  build:
-    machine: true
-    working_directory: ~/my_app
-    steps:
-      # Docker is preinstalled, along with docker-compose
-      - checkout
+  one:
+    build:
+      machine: true
+      working_directory: ~/my_app
+      steps:
+        # Docker is preinstalled, along with docker-compose
+        - checkout
 
       # start proprietary DB using private Docker image
-      - run: |
-          docker login -u simbioseuser -p $DOCKER_HUB_PASS
-          docker run -d --name db simbioseventures/zookeeper:infra
+        - run: |
+            docker login -u simbioseuser -p $DOCKER_HUB_PASS
+            docker run -d --name db simbioseventures/zookeeper:infra
   
   two:
     docker:
