@@ -34,7 +34,9 @@ jobs:
           username: simbioseuser  # can specify string literal values
           password: $DOCKERHUB_PASSWORD  # or project environment variable reference
     steps:
-      - run: echo ok
+      - run: 
+          name: cd
+          command: cd /simbiose && ls -lha
 
   mysql:
     docker:
