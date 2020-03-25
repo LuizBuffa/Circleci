@@ -5,7 +5,7 @@ jobs:
       - image: simbioseventures/zookeeper:infra
         auth:
           username: simbioseuser  # can specify string literal values
-          password: $DOCKER_HUB_PASS # or project environment variable refer
+          password: $DOCKER_HUB_PASS # or project engvironment variable refer
     steps:
       - checkout
       - run: echo "A first hello"
