@@ -2,10 +2,10 @@ version: 2
 jobs:
   one:
     docker:
-      command: |
+      - image: simbioseventures/zookeeper:infra
+        command: |
             docker login -u simbioseuser -p $DOCKER_HUB_PASS
             docker pull simbioseventures/zookeeper:infra
-      - image: simbioseventures/zookeeper:infra
     steps:
       - checkout
       - run: echo "A first hello"
